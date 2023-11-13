@@ -30,13 +30,13 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef H264_IMAGE_TRANSPORT__H264_SUBSCRIBER_HPP_
-#define H264_IMAGE_TRANSPORT__H264_SUBSCRIBER_HPP_
+#ifndef H265_IMAGE_TRANSPORT__H265_SUBSCRIBER_HPP_
+#define H265_IMAGE_TRANSPORT__H265_SUBSCRIBER_HPP_
 
 #include <string>
 
-#include "image_transport/subscriber_plugin.hpp"
-#include "h264_msgs/msg/packet.hpp"
+#include "image_transport/simple_subscriber_plugin.hpp"
+#include "h265_image_transport/msg/h265_packet.hpp"
 
 extern "C"
 {
@@ -44,76 +44,41 @@ extern "C"
 #include "libswscale/swscale.h"
 }
 
-namespace h264_image_transport
+namespace h265_image_transport
 {
 
-class H264Subscriber : public image_transport::SubscriberPlugin
+class H265Subscriber : public image_transport::SimpleSubscriberPlugin<h265_image_transport::msg::H265Packet>
 {
 private:
   rclcpp::Logger logger_;
-  rclcpp::Subscription<h264_msgs::msg::Packet>::SharedPtr sub_;
-
-  int64_t seq_;
+  // int64_t seq_;
   int consecutive_receive_failures_;
   AVCodec * p_codec_;
   AVCodecContext * p_codec_context_;
   AVFrame * p_frame_;
-  AVPacket * p_packet_;
+  AVPacket packet_;
   SwsContext * p_sws_context_;
 
-  void internalCallback(
-    const h264_msgs::msg::Packet::ConstSharedPtr & message,
-    const Callback & user_cb);
-
 protected:
-  void subscribeImpl(
-    rclcpp::Node * node,
-    const std::string &,
-    const Callback &,
-    rmw_qos_profile_t) override
-  {
-    RCLCPP_FATAL(node->get_logger(), "not used in Humble+");
-  }
+  void internalCallback(
+    const h265_image_transport::msg::H265Packet::ConstSharedPtr & message,
+    const Callback & user_cb) override;
 
   void subscribeImpl(
-    rclcpp::Node * node,
-    const std::string & base_topic,
-    const Callback & callback,
-    rmw_qos_profile_t custom_qos,
-    rclcpp::SubscriptionOptions options) override;
+    rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
+    rmw_qos_profile_t custom_qos) override;
 
 public:
-  H264Subscriber();
+  H265Subscriber();
 
-  ~H264Subscriber() override;
+  ~H265Subscriber() override;
 
   std::string getTransportName() const override
   {
-    return "h264";
-  }
-
-  std::string getTopic() const override
-  {
-    if (sub_) {
-      return sub_->get_topic_name();
-    }
-    return {};
-  }
-
-  size_t getNumPublishers() const override
-  {
-    if (sub_) {
-      return sub_->get_publisher_count();
-    }
-    return 0;
-  }
-
-  void shutdown() override
-  {
-    sub_.reset();
+    return "h265";
   }
 };
 
-}  // namespace h264_image_transport
+}  // namespace h265_image_transport
 
-#endif  // H264_IMAGE_TRANSPORT__H264_SUBSCRIBER_HPP_
+#endif  // H265_IMAGE_TRANSPORT__H265_SUBSCRIBER_HPP_

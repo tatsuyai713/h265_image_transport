@@ -30,110 +30,86 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "h264_image_transport/h264_subscriber.hpp"
+#include "h265_image_transport/h265_subscriber.hpp"
 
 #include <memory>
 #include <string>
 
 #include "sensor_msgs/image_encodings.hpp"
 
-namespace h264_image_transport
+namespace h265_image_transport
 {
 
-H264Subscriber::H264Subscriber()
-: logger_(rclcpp::get_logger("H264Subscriber")),
-  seq_(-1),
+H265Subscriber::H265Subscriber()
+: logger_(rclcpp::get_logger("H265Subscriber")),
+  // seq_(-1),
   consecutive_receive_failures_(0),
   p_codec_(),
   p_codec_context_(),
   p_frame_(),
-  p_packet_(),
+  packet_(),
   p_sws_context_() {}
 
-H264Subscriber::~H264Subscriber()
+H265Subscriber::~H265Subscriber()
 {
   avcodec_close(p_codec_context_);
   av_free(p_codec_context_);
-  av_packet_free(&p_packet_);
   av_frame_free(&p_frame_);
 }
 
-void H264Subscriber::subscribeImpl(
-  rclcpp::Node * node,
-  const std::string & base_topic,
+void H265Subscriber::subscribeImpl(
+  rclcpp::Node * node, const std::string & base_topic,
   const Callback & callback,
-  rmw_qos_profile_t custom_qos,
-  rclcpp::SubscriptionOptions options)
+  rmw_qos_profile_t custom_qos)
 {
+  SimpleSubscriberPlugin::subscribeImpl(node, base_topic, callback, custom_qos);
+
   logger_ = node->get_logger();
+  av_init_packet(&packet_);
   av_log_set_level(AV_LOG_WARNING);
 
-  p_codec_ = avcodec_find_decoder(AV_CODEC_ID_H264);
+  p_codec_ = avcodec_find_decoder(AV_CODEC_ID_H265);
   if (!p_codec_) {
-    RCLCPP_ERROR(logger_, "Could not find ffmpeg h264 codec");
-    return;
+    RCLCPP_ERROR(logger_, "Could not find ffmpeg h265 codec");
+    throw std::runtime_error("Could not find ffmpeg h265 codec");
   }
 
   p_codec_context_ = avcodec_alloc_context3(p_codec_);
-  if (p_codec_context_ == nullptr) {
-    RCLCPP_ERROR(logger_, "Could not alloc codec context");
-    return;
-  }
 
   if (avcodec_open2(p_codec_context_, p_codec_, nullptr) < 0) {
-    RCLCPP_ERROR(logger_, "Could not open ffmpeg h264 codec");
-    return;
-  }
-
-  p_packet_ = av_packet_alloc();
-  if (p_packet_ == nullptr) {
-    RCLCPP_ERROR(logger_, "Could not alloc packet");
-    return;
+    RCLCPP_ERROR(logger_, "Could not open ffmpeg h265 codec");
+    throw std::runtime_error("Could not open ffmpeg h265 codec");
   }
 
   p_frame_ = av_frame_alloc();
-  if (p_frame_ == nullptr) {
-    RCLCPP_ERROR(logger_, "Could not alloc frame");
-    return;
-  }
-
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(custom_qos), custom_qos);
-
-  // Subscribe _after_ we have successfully initialized libav
-  sub_ = node->create_subscription<h264_msgs::msg::Packet>(
-    base_topic + "/" + getTransportName(), qos,
-    [this, callback](const typename std::shared_ptr<const h264_msgs::msg::Packet> msg) {
-      internalCallback(msg, callback);
-    },
-    options);
 }
 
-void H264Subscriber::internalCallback(
-  const h264_msgs::msg::Packet::ConstSharedPtr & message,
+void H265Subscriber::internalCallback(
+  const h265_image_transport::msg::H265Packet::ConstSharedPtr & message,
   const Callback & user_cb)
 {
   // Report on sequence problems
-  if (seq_ < 0) {
-    RCLCPP_INFO(logger_, "First message: %ld", message->seq);
-  } else {
-    if (message->seq < seq_) {
-      RCLCPP_INFO(logger_, "Old message: %ld", message->seq);
-    }
-    if (message->seq == seq_) {
-      RCLCPP_INFO(logger_, "Repeat message: %ld", seq_);
-    }
-    if (message->seq > seq_ + 1) {
-      RCLCPP_INFO(logger_, "Missing message(s): %ld-%ld", seq_ + 1, message->seq - 1);
-    }
-  }
-  seq_ = message->seq;
+  // if (seq_ < 0) {
+  //   RCLCPP_INFO(logger_, "First message: %ld", message->seq);
+  // } else {
+  //   if (message->seq < seq_) {
+  //     RCLCPP_INFO(logger_, "Old message: %ld", message->seq);
+  //   }
+  //   if (message->seq == seq_) {
+  //     RCLCPP_INFO(logger_, "Repeat message: %ld", seq_);
+  //   }
+  //   if (message->seq > seq_ + 1) {
+  //     RCLCPP_INFO(logger_, "Missing message(s): %ld-%ld", seq_ + 1, message->seq - 1);
+  //   }
+  // }
+  // seq_ = message->seq;
 
-  p_packet_->size = static_cast<int>(message->data.size());
-  p_packet_->data = const_cast<uint8_t *>(reinterpret_cast<uint8_t const *>(&message->data[0]));
+  packet_.size = static_cast<int>(message->data.size());
+  packet_.data = const_cast<uint8_t *>(reinterpret_cast<uint8_t const *>(&message->data[0]));
 
   // Send packet to decoder
-  if (avcodec_send_packet(p_codec_context_, p_packet_) < 0) {
-    RCLCPP_INFO(logger_, "Could not send packet %ld", seq_);
+  if (avcodec_send_packet(p_codec_context_, &packet_) < 0) {
+    RCLCPP_INFO(logger_, "Could not send packet");
     return;
   }
 
@@ -175,4 +151,4 @@ void H264Subscriber::internalCallback(
   user_cb(image);
 }
 
-}  // namespace h264_image_transport
+}  // namespace h265_image_transport
