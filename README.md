@@ -36,7 +36,7 @@ ros2 launch h265_image_transport example_launch.py
 
 ### Requirements
 
-Tested on ROS2 Eloquent (Ubuntu 18.04) and Foxy (Ubuntu 20.04).
+Tested on ROS 2 Eloquent (Ubuntu 18.04) and Foxy (Ubuntu 20.04).
 
 Eloquent libraries:
 * libavdevice>=57.10.100
