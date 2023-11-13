@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.5)
 
 project(h265_image_transport)
 
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
+
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -15,8 +20,8 @@ endif()
 if($ENV{CLION_IDE})
   message("Running inside CLion")
   find_package(fastrtps_cmake_module REQUIRED)
-  set(FastRTPS_INCLUDE_DIR "/opt/ros/eloquent/include")
-  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/eloquent/lib/libfastrtps.so")
+  set(FastRTPS_INCLUDE_DIR "/opt/ros/humble/include")
+  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/humble/lib/libfastrtps.so")
 endif()
 
 

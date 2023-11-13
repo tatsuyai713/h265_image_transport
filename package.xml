@@ -19,12 +19,19 @@
 
     <member_of_group>rosidl_interface_packages</member_of_group>
 
-    <depend>ffmpeg</depend>
-    <depend>image_transport</depend>
-    <depend>libavdevice-dev</depend>
-    <depend>pluginlib</depend>
-    <depend>rclcpp</depend>
-    <depend>std_msgs</depend>
+    <build_depend>ffmpeg</build_depend>
+    <build_depend>image_transport</build_depend>
+    <build_depend>libavdevice-dev</build_depend>
+    <build_depend>pluginlib</build_depend>
+    <build_depend>rclcpp</build_depend>
+    <build_depend>std_msgs</build_depend>
+
+    <exec_depend>ffmpeg</exec_depend>
+    <exec_depend>image_transport</exec_depend>
+    <exec_depend>libavdevice-dev</exec_depend>
+    <exec_depend>pluginlib</exec_depend>
+    <exec_depend>rclcpp</exec_depend>
+    <exec_depend>std_msgs</exec_depend>
 
 
     <test_depend>ament_lint_auto</test_depend>
