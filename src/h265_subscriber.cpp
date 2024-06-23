@@ -60,9 +60,9 @@ H265Subscriber::~H265Subscriber()
 void H265Subscriber::subscribeImpl(
   rclcpp::Node * node, const std::string & base_topic,
   const Callback & callback,
-  rmw_qos_profile_t custom_qos)
+  rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions options)
 {
-  SimpleSubscriberPlugin::subscribeImpl(node, base_topic, callback, custom_qos);
+  SimpleSubscriberPlugin::subscribeImpl(node, base_topic, callback, custom_qos, options);
 
   logger_ = node->get_logger();
   av_init_packet(&packet_);

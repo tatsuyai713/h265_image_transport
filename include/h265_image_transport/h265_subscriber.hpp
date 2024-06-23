@@ -53,7 +53,7 @@ private:
   rclcpp::Logger logger_;
   // int64_t seq_;
   int consecutive_receive_failures_;
-  AVCodec * p_codec_;
+  const AVCodec * p_codec_;
   AVCodecContext * p_codec_context_;
   AVFrame * p_frame_;
   AVPacket packet_;
@@ -66,7 +66,7 @@ protected:
 
   void subscribeImpl(
     rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
-    rmw_qos_profile_t custom_qos) override;
+    rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions options) override;
 
 public:
   H265Subscriber();
